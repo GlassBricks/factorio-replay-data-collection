@@ -10,8 +10,14 @@ import {
   ScriptRaisedBuiltEvent,
   UnitNumber,
 } from "factorio:runtime"
-import EntityTracker from "./entity-tracker"
 import { DataCollector } from "../data-collector"
+import { getTick } from "../tick"
+import EntityTracker from "./entity-tracker"
+
+export interface RoboportUsageData {
+  period: number
+  roboports: TrackedRoboportData[]
+}
 
 interface TrackedRoboportData {
   unitNumber: UnitNumber
@@ -20,11 +26,6 @@ interface TrackedRoboportData {
   usage: [time: number, numCharging: number, numWaiting: number][]
   timeRemoved?: number
   removedReason?: "deconstructed" | "mined" | "destroyed"
-}
-
-export interface RoboportUsageData {
-  period: number
-  roboports: TrackedRoboportData[]
 }
 
 export default class RoboportUsage
@@ -53,7 +54,7 @@ export default class RoboportUsage
 
   protected onPeriodicUpdate(entity: LuaEntity, data: TrackedRoboportData): void {
     data.usage.push([
-      game.tick,
+      getTick(),
       entity.logistic_cell!.charging_robot_count,
       entity.logistic_cell!.to_charge_robot_count,
     ])

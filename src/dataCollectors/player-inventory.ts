@@ -1,7 +1,15 @@
-import { DataCollector } from "../data-collector"
 import { CraftingQueueItem, NthTickEventData, OnPlayerCraftedItemEvent } from "factorio:runtime"
+import { DataCollector } from "../data-collector"
+import { getTick } from "../tick"
 
-interface PerPlayerData {
+export interface PlayerInventoryData {
+  period: number
+  players: {
+    [playerName: string]: TrackedPlayerData
+  }
+}
+
+interface TrackedPlayerData {
   inventory: Record<string, number>[]
   craftingQueue: Omit<CraftingQueueItem, "index">[][]
   craftingEvents: {
@@ -10,17 +18,10 @@ interface PerPlayerData {
   }[]
 }
 
-interface PlayerInventoryData {
-  period: number
-  players: {
-    [playerName: string]: PerPlayerData
-  }
-}
-
 export default class PlayerInventory implements DataCollector<PlayerInventoryData> {
   constructor(public nth_tick_period: number = 360) {}
 
-  players: Record<string, PerPlayerData> = {}
+  players: Record<string, TrackedPlayerData> = {}
 
   on_nth_tick(event: NthTickEventData) {
     for (const [, player] of game.players) {
@@ -38,8 +39,12 @@ export default class PlayerInventory implements DataCollector<PlayerInventoryDat
         }
       }
 
-      const inventoryContents = player.get_main_inventory()?.get_contents() ?? {}
-      playerData.inventory.push(inventoryContents)
+      const inventoryContents = player.get_main_inventory()?.get_contents() ?? []
+      const counts: Record<string, number> = {}
+      for (const item of inventoryContents) {
+        counts[item.name] = item.count
+      }
+      playerData.inventory.push(counts)
       const craftingQueue =
         (player.controller_type == defines.controllers.character &&
           player.crafting_queue?.map((item) => ({
@@ -62,7 +67,7 @@ export default class PlayerInventory implements DataCollector<PlayerInventoryDat
     })
     const recipe = event.recipe
     playerData.craftingEvents.push({
-      time: game.tick,
+      time: getTick(),
       recipe: recipe.name,
     })
   }

@@ -15,8 +15,5 @@
       }
     ]
   },
-  "include": [
-    "src/main.ts",
-    "src/*.d.ts"
-  ]
+  "include": ["src/main.ts", "src/*.d.ts"]
 }

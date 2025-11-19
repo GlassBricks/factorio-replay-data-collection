@@ -3,11 +3,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "outDir": "test-mod",
-    "types": [
-      "typed-factorio/runtime",
-      "gb-tstl-utils",
-      "factorio-test"
-    ]
+    "types": ["typed-factorio/runtime", "gb-tstl-utils", "factorio-test"]
   },
   "tstl": {
     "luaPlugins": [

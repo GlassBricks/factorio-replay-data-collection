@@ -1,7 +1,7 @@
-import MachineProduction from "../dataCollectors/machine-production"
-import { simulateEvent, testDataCollector } from "./test-util"
 import { LuaEntity, LuaSurface, MapPosition, OnGuiClosedEvent } from "factorio:runtime"
 import expect from "tstl-expect"
+import MachineProduction from "../dataCollectors/machine-production"
+import { simulateEvent, testDataCollector } from "./test-util"
 
 let dc: MachineProduction
 before_each(() => {
@@ -25,9 +25,9 @@ before_all(() => {
 })
 
 function createPowerSource() {
-  const engine = surface.create_entity({ name: "steam-engine", position: { x: -5, y: -5 } })!
+  const engine = surface.create_entity({ name: "steam-turbine", position: { x: -5, y: -5 } })!
   on_tick(() => {
-    engine.fluidbox[0] = { name: "steam", amount: 200, temperature: 165 }
+    engine.fluidbox[0] = { name: "steam", amount: 200, temperature: 500 }
   })
   surface.create_entity({ name: "substation", position: { x: -5, y: 0 } })
 }
@@ -231,10 +231,10 @@ test("tracks a machine if modules changed", () => {
 
     expect(data.machines[0].recipes[3]).toEqual({
       recipe: "iron-gear-wheel",
-      craftingSpeed: expect.closeTo(0.75 * 1.2 * 0.96 * 1.2, 0.1),
+      craftingSpeed: expect.closeTo(0.75 * (1.8-0.04), 0.1),
       productivityBonus: expect.closeTo(0.04),
       timeStarted: 420,
-      production: [[480, 2, expect.anything(), expect.anything(), "working"]],
+      production: [[480, 3, expect.anything(), expect.anything(), "working"]],
     })
   })
 })

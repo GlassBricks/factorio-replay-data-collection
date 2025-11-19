@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-target_zip=$HOME/.factorio/saves/DS\ MP/1_44_23.zip
+target_zip="$1"
 echo "target_zip: $target_zip"
 
 if [ ! -f "$target_zip" ]; then

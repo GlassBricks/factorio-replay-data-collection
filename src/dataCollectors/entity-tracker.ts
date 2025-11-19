@@ -22,7 +22,7 @@ export default abstract class EntityTracker<T> implements EventHandlers {
   }
 
   on_init() {
-    for (const [name] of game.get_filtered_entity_prototypes(this.prototypeFilters!)) {
+    for (const [name] of prototypes.get_entity_filtered(this.prototypeFilters!)) {
       this.prototypes.add(name)
     }
     delete this.prototypeFilters
@@ -52,22 +52,22 @@ export default abstract class EntityTracker<T> implements EventHandlers {
   }
 
   on_built_entity(event: OnBuiltEntityEvent) {
-    this.onCreated(event.created_entity, event)
+    this.onCreated(event.entity, event)
   }
 
   on_robot_built_entity(event: OnRobotBuiltEntityEvent) {
-    this.onCreated(event.created_entity, event)
+    this.onCreated(event.entity, event)
   }
 
   private onEntityDeleted(
     entity: LuaEntity,
-    _event: OnPrePlayerMinedItemEvent | OnRobotPreMinedEvent | OnEntityDiedEvent,
+    event: OnPrePlayerMinedItemEvent | OnRobotPreMinedEvent | OnEntityDiedEvent,
   ) {
     const unitNumber = entity.unit_number
     if (!unitNumber) return
     const entry = this.getEntityData(entity, unitNumber)
     if (!entry) return
-    this.onDeleted?.(entity, _event, entry)
+    this.onDeleted?.(entity, event, entry)
     this.stopTracking(unitNumber)
   }
 
@@ -81,7 +81,7 @@ export default abstract class EntityTracker<T> implements EventHandlers {
     delete this.trackedEntities[unitNumber]
   }
 
-  protected removeEntry(unitNumber: UnitNumber) {
+  protected removeEntityData(unitNumber: UnitNumber) {
     delete this.entityData[unitNumber]
   }
 

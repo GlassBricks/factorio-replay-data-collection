@@ -44,4 +44,4 @@ commands.add_command("export-replay-data", "Export current collected replay data
   game.print("Exported data to script-output/replay-data/*.json")
 })
 
-require("./old-control")
+require('__base__/script/freeplay/control.lua')

@@ -1,8 +1,14 @@
-import EntityTracker from "./entity-tracker"
 import { EntityPrototypeFilterWrite, LuaEntity, MapPosition, nil, UnitNumber } from "factorio:runtime"
 import { DataCollector } from "../data-collector"
+import { getTick } from "../tick"
+import EntityTracker from "./entity-tracker"
 
-export interface SingleBufferData {
+export interface BufferData {
+  period: number
+  buffers: TrackedBufferData[]
+}
+
+interface TrackedBufferData {
   name: string
   unitNumber: number
   location: MapPosition
@@ -12,12 +18,7 @@ export interface SingleBufferData {
   amounts: [time: number, amount: number][]
 }
 
-export interface BufferData {
-  period: number
-  buffers: SingleBufferData[]
-}
-
-interface TrackedBufferData {
+interface EntityData {
   content?: string
   name: string
   unitNumber: UnitNumber
@@ -33,7 +34,7 @@ interface TrackedBufferData {
   amounts?: [time: number, amount: number][]
 }
 
-export default class BufferAmounts extends EntityTracker<TrackedBufferData> implements DataCollector<BufferData> {
+export default class BufferAmounts extends EntityTracker<EntityData> implements DataCollector<BufferData> {
   constructor(
     public nth_tick_period: number = 60 * 5,
     public minDataPointsToDetermineItem: number = 5,
@@ -55,14 +56,14 @@ export default class BufferAmounts extends EntityTracker<TrackedBufferData> impl
     super(...filters)
   }
 
-  protected override initialData(entity: LuaEntity): TrackedBufferData | nil {
+  protected override initialData(entity: LuaEntity): EntityData | nil {
     const type = entity.type == "storage-tank" ? "tank" : "chest"
     return {
       name: entity.name,
       type,
       unitNumber: entity.unit_number!,
       location: entity.position,
-      timeBuilt: game.tick,
+      timeBuilt: getTick(),
       itemCounts: [],
     }
   }
@@ -83,22 +84,28 @@ export default class BufferAmounts extends EntityTracker<TrackedBufferData> impl
     }
   }
 
-  protected override onPeriodicUpdate(entity: LuaEntity, data: TrackedBufferData) {
+  protected override onPeriodicUpdate(entity: LuaEntity, data: EntityData) {
     const amounts = data.amounts
     if (amounts) {
       const counts =
         data.type == "tank"
           ? entity.get_fluid_count(assert(data.content))
           : entity.get_inventory(defines.inventory.chest)!.get_item_count(assert(data.content))
-      amounts.push([game.tick, counts])
+      amounts.push([getTick(), counts])
     } else {
       const itemCounts = assert(data.itemCounts)
-      const counts =
-        data.type == "tank"
-          ? entity.get_fluid_contents()
-          : entity.get_inventory(defines.inventory.chest)!.get_contents()
+      let counts: Record<string, number>
+      if (data.type == "tank") {
+        counts = entity.get_fluid_contents()
+      } else {
+        const items = entity.get_inventory(defines.inventory.chest)!.get_contents()
+        counts = {}
+        for (const item of items) {
+          counts[item.name] = item.count
+        }
+      }
       if (next(counts)[0] == nil) return
-      itemCounts.push({ time: game.tick, counts })
+      itemCounts.push({ time: getTick(), counts })
       if (itemCounts.length == this.minDataPointsToDetermineItem) {
         this.determineItemType(data)
       }
@@ -106,7 +113,7 @@ export default class BufferAmounts extends EntityTracker<TrackedBufferData> impl
     }
   }
 
-  private determineItemType(data: TrackedBufferData) {
+  private determineItemType(data: EntityData) {
     const maxAtTime: Record<string, number> = {}
     const itemCounts = data.itemCounts!
     for (const { counts } of itemCounts) {
@@ -132,7 +139,7 @@ export default class BufferAmounts extends EntityTracker<TrackedBufferData> impl
   }
 
   exportData(): BufferData {
-    const buffers: SingleBufferData[] = []
+    const buffers: TrackedBufferData[] = []
     for (const [unitNumber, entity] of pairs(this.trackedEntities)) {
       const data = this.getEntityData(entity, unitNumber)
       const amounts = data?.amounts

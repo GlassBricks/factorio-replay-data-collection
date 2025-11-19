@@ -21,15 +21,15 @@ export interface DataCollector<T extends object = object> extends EventHandlers 
 
 const initialDataCollectors: Record<string, DataCollector> = {}
 
-declare const global: {
+declare const storage: {
   dataCollectors?: Record<string, DataCollector>
 }
 
 function getDataCollectors(): Record<string, DataCollector> {
-  if (!global.dataCollectors) {
-    global.dataCollectors = initialDataCollectors
+  if (!storage.dataCollectors) {
+    storage.dataCollectors = initialDataCollectors
   }
-  return global.dataCollectors
+  return storage.dataCollectors
 }
 
 export function addDataCollector(dataCollector: DataCollector): void {
@@ -90,11 +90,10 @@ function getOutFileName(s: string): string {
 }
 
 export function exportAllData(): void {
-  for (const [name, datum] of pairs(global.dataCollectors!)) {
-    const outname = `replay-data/${getOutFileName(name)}.json`
+  for (const [name, datum] of pairs(storage.dataCollectors!)) {
+    const outname = `${getOutFileName(name)}.json`
     log(`Exporting ${name}`)
-    const data = game.table_to_json(datum.exportData())
-    game.write_file(outname, data)
+    helpers.write_file(outname, helpers.table_to_json(datum.exportData()))
   }
-  log("Exported dataCollector data to script-output/replay-data/*.json")
+  log("Exported dataCollector data to script-output/*.json")
 }

@@ -1,5 +1,5 @@
 .idea
 .vscode
 node_modules/**
-factorio-test-data/
+factorio-test-data-dir/
 test-mod/**/*.lua

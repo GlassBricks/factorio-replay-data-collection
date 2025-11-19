@@ -1,19 +1,20 @@
-import EntityTracker from "./entity-tracker"
 import { LuaEntity, MapPosition, nil } from "factorio:runtime"
 import { DataCollector } from "../data-collector"
+import { getTick } from "../tick"
+import EntityTracker from "./entity-tracker"
 
-export interface SingleLabData {
+export interface LabData {
+  period: number
+  sciencePacks: string[]
+  labs: TrackedData[]
+}
+
+interface TrackedData {
   name: string
   unitNumber: number
   location: MapPosition
   timeBuilt: number
   packs: [time: number, ...packCounts: number[]][]
-}
-
-export interface LabData {
-  period: number
-  sciencePacks: string[]
-  labs: SingleLabData[]
 }
 
 const sciencePacks: string[] = [
@@ -26,25 +27,26 @@ const sciencePacks: string[] = [
   "space-science-pack",
 ]
 
-export default class LabContents extends EntityTracker<SingleLabData> implements DataCollector<LabData> {
+export default class LabContents extends EntityTracker<TrackedData> implements DataCollector<LabData> {
   constructor(public nth_tick_period: number = 60) {
     super({ filter: "type", type: "lab" })
   }
 
-  protected override initialData(entity: LuaEntity): SingleLabData | nil {
+  protected override initialData(entity: LuaEntity): TrackedData | nil {
     return {
       name: entity.name,
       unitNumber: entity.unit_number!,
       location: entity.position,
-      timeBuilt: game.tick,
+      timeBuilt: getTick(),
       packs: [],
     }
   }
 
-  protected override onPeriodicUpdate(entity: LuaEntity, data: SingleLabData) {
-    const contents = entity.get_inventory(defines.inventory.lab_input)!.get_contents()
-    const packCounts = sciencePacks.map((pack) => contents[pack] ?? 0)
-    data.packs.push([game.tick, ...packCounts])
+  protected override onPeriodicUpdate(entity: LuaEntity, data: TrackedData) {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const get_item_count = entity.get_inventory(defines.inventory.lab_input)!.get_item_count
+    const packCounts = sciencePacks.map((pack) => get_item_count(pack))
+    data.packs.push([getTick(), ...packCounts])
   }
 
   exportData(): LabData {

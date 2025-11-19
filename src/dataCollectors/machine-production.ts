@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import {
   LuaEntity,
   MapPosition,
@@ -12,9 +13,10 @@ import {
   OnRobotPreMinedEvent,
   UnitNumber,
 } from "factorio:runtime"
-import EntityTracker from "./entity-tracker"
-import { DataCollector } from "../data-collector"
 import { list_to_map } from "util"
+import { DataCollector } from "../data-collector"
+import { getTick } from "../tick"
+import EntityTracker from "./entity-tracker"
 
 type EntityStatus = keyof typeof defines.entity_status | "unknown"
 
@@ -135,7 +137,7 @@ export default class MachineProduction
   override on_init(): void {
     super.on_init()
     for (const name of this.prototypes) {
-      const prototype = game.entity_prototypes[name]
+      const prototype = prototypes.entity[name]
       assert(
         prototype.type == "assembling-machine" || prototype.type == "furnace" || prototype.type == "rocket-silo",
         `Not a crafting machine or furnace: ${name}`,
@@ -169,7 +171,7 @@ export default class MachineProduction
       name: entity.name,
       unitNumber: entity.unit_number!,
       location: entity.position,
-      timeBuilt: game.tick,
+      timeBuilt: getTick(),
       lastProductsFinished: 0,
       lastConfig: nil,
       recipeProduction: [],
@@ -177,7 +179,7 @@ export default class MachineProduction
   }
 
   private addDataPoint(entity: LuaEntity, info: TrackedMachineData, status: EntityStatus) {
-    const tick = game.tick
+    const tick = getTick()
     const configEntries = info.recipeProduction
     const currentConfig = configEntries[configEntries.length - 1]
 
@@ -194,19 +196,19 @@ export default class MachineProduction
 
     let extraInfo: unknown = nil
     if (status == "item_ingredient_shortage") {
-      const currentInputs = entity.get_inventory(defines.inventory.assembling_machine_input)!.get_contents()
-      const needed = entity.get_recipe()!.ingredients
+      const get_item_count = entity.get_inventory(defines.inventory.assembling_machine_input)!.get_item_count
+      const needed = entity.get_recipe()[0]!.ingredients
       const missingIngredients: string[] = []
       for (const { type, amount, name } of needed) {
         if (type != "item") continue
-        const currentAmount = currentInputs[name]
+        const currentAmount = get_item_count(name)
         if (currentAmount == nil || currentAmount < amount) {
           missingIngredients.push(name)
         }
       }
       extraInfo = missingIngredients
     } else if (status == "fluid_ingredient_shortage") {
-      const needed = entity.get_recipe()!.ingredients
+      const needed = entity.get_recipe()[0]!.ingredients
       const missingIngredients: string[] = []
       for (const { type, amount, name } of needed) {
         if (type != "fluid") continue
@@ -237,7 +239,7 @@ export default class MachineProduction
       recipeProduction.pop()
       return
     }
-    lastProduction.timeStopped = game.tick
+    lastProduction.timeStopped = getTick()
     lastProduction.stoppedReason = reason
   }
 
@@ -247,7 +249,7 @@ export default class MachineProduction
       recipe: config.recipe,
       craftingSpeed: config.craftingSpeed,
       productivityBonus: config.productivityBonus,
-      timeStarted: game.tick,
+      timeStarted: getTick(),
       production: [],
     })
   }
@@ -271,7 +273,7 @@ export default class MachineProduction
     status ??= this.getStatus(entity)
     const isStopped = knownStopReason != nil || isStoppingStatus(status)
 
-    const recipe = (entity.get_recipe() ?? (entity.type == "furnace" ? entity.previous_recipe : nil))?.name
+    const recipe = (entity.get_recipe()[0] ?? (entity.type == "furnace" ? entity.previous_recipe?.name : nil))?.name
     const lastConfig = info.lastConfig
     const config: MachineConfig | nil = recipe
       ? {

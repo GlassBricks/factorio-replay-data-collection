@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TypeScriptToLua/TypeScriptToLua/master/tsconfig-schema.json",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "types": [
+      "typed-factorio/runtime",
+      "gb-tstl-utils",
+      "factorio-test"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ]
+}

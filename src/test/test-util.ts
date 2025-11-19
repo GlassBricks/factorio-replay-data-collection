@@ -1,40 +1,13 @@
 import { NthTickEventData } from "factorio:runtime"
 import { DataCollector } from "../data-collector"
-
-let testStartTick = 0
-
-export function useFakeTime() {
-  if (testStartTick != 0) return
-  testStartTick = game.tick
-  after_test(() => {
-    testStartTick = 0
-    rawset(game, "tick", nil!)
-  })
-}
-
-export function fakeTime(): number {
-  if (rawget(game, "tick") != nil) return game.tick
-  return game.tick - testStartTick
-}
-
-export function withFakeTime(fn: () => void) {
-  if (rawget(game, "tick") != nil) {
-    fn()
-    return
-  }
-  const oldTick = game.tick
-  const fakeTick = oldTick - testStartTick
-  rawset(game, "tick", fakeTick)
-  fn()
-  rawset(game, "tick", nil)
-}
+import { getTick, useFakeTime } from "../tick"
 
 export function simulateEvent<K extends defines.events>(event: K, data: Omit<K["_eventData"], "name" | "tick">) {
   const handler = script.get_event_handler(event)
   if (handler != nil) {
     handler({
       name: event,
-      tick: game.tick,
+      tick: getTick(),
       ...data,
     })
   }
@@ -44,15 +17,12 @@ const handlers: Record<defines.events, LuaSet<(event: any) => void>> = {}
 
 function setEventHandler(event: defines.events) {
   script.on_event(event, (event) => {
-    const oldTick = event.tick
-    withFakeTime(() => {
-      if (handlers[event.name] == nil) return
-      ;(event as any).tick = game.tick
-      for (const handler of handlers[event.name]) {
-        handler(event)
-      }
-    })
-    ;(event as any).tick = oldTick
+    const eventHandlers = handlers[event.name]
+    if (eventHandlers == nil) return
+    ;(event as any).tick = getTick()
+    for (const handler of eventHandlers) {
+      handler(event)
+    }
   })
 }
 

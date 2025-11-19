@@ -1,6 +1,6 @@
-import { testDataCollector } from "./test-util"
-import PlayerInventory from "../dataCollectors/player-inventory"
 import expect from "tstl-expect"
+import PlayerInventory from "../dataCollectors/player-inventory"
+import { testDataCollector } from "./test-util"
 
 test("tracks player inventory", () => {
   const player = game.players[1]
@@ -23,9 +23,6 @@ test("tracks player inventory", () => {
 
 test("tracks player crafting queue", () => {
   const player = game.players[1]
-  after_test(() => {
-    player.set_controller({ type: defines.controllers.editor })
-  })
   player.set_controller({
     type: defines.controllers.character,
     character: game.surfaces[1].create_entity({ name: "character", position: { x: 0, y: 0 } }),
