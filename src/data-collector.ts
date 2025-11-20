@@ -2,7 +2,7 @@ import { add_lib, EventLib } from "event_handler"
 import { NthTickEventData } from "factorio:runtime"
 
 export type EventHandlers = {
-  [K in keyof typeof defines.events]?: (event: (typeof defines.events)[K]["_eventData"]) => void
+  [K in keyof typeof defines.events]?: (this: unknown, event: (typeof defines.events)[K]["_eventData"]) => void
 }
 
 export interface DataCollector<T extends object = object> extends EventHandlers {
@@ -47,7 +47,8 @@ export function addDataCollector(dataCollector: DataCollector): void {
   for (const [name, id] of pairs(defines.events)) {
     if (dataCollector[name]) {
       lib.events![id] = (event: any) => {
-        getDataCollectors()[dataCollectorName][name]!(event)
+        const dataCollector = getDataCollectors()[dataCollectorName]
+        dataCollector[name]!(event)
       }
     }
   }

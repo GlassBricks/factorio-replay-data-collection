@@ -18,7 +18,8 @@
   },
   "tstl": {
     "luaTarget": "5.2",
-    "noResolvePaths": ["freeplay", "silo-script", "event_handler"]
+    "noResolvePaths": ["freeplay", "silo-script", "event_handler"],
+    "noImplicitSelf": true
   },
   "include": ["src"]
 }

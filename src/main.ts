@@ -1,13 +1,13 @@
 import { add_lib } from "event_handler"
-import PlayerPosition from "./dataCollectors/player-position"
-import MachineProduction from "./dataCollectors/machine-production"
 import { addDataCollector, exportAllData } from "./data-collector"
 import BufferAmounts from "./dataCollectors/buffer-amounts"
-import RocketLaunchTime from "./dataCollectors/rocket-launch-time"
-import PlayerInventory from "./dataCollectors/player-inventory"
-import ResearchTiming from "./dataCollectors/research-timing"
 import LabContents from "./dataCollectors/lab-contents"
+import MachineProduction from "./dataCollectors/machine-production"
+import PlayerInventory from "./dataCollectors/player-inventory"
+import PlayerPosition from "./dataCollectors/player-position"
+import ResearchTiming from "./dataCollectors/research-timing"
 import RoboportUsage from "./dataCollectors/roboport-usage"
+import RocketLaunchTime from "./dataCollectors/rocket-launch-time"
 
 const exportOnSiloLaunch = true
 
@@ -44,4 +44,4 @@ commands.add_command("export-replay-data", "Export current collected replay data
   game.print("Exported data to script-output/replay-data/*.json")
 })
 
-require('__base__/script/freeplay/control.lua')
+require("@NoResolution:__base__/script/freeplay/control.lua")
